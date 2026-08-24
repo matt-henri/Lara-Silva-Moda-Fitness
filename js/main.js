@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 5. Configuração do Botão Flutuante do WhatsApp
   const whatsappFloating = document.getElementById('whatsapp-floating');
   if (whatsappFloating) {
-    whatsappFloating.href = `https://wa.me/${SITE_CONFIG.whatsappNumber}?text=${encodeURIComponent(SITE_CONFIG.defaultMessage)}`;
+    whatsappFloating.href = `https://api.whatsapp.com/send?phone=${SITE_CONFIG.whatsappNumber}&text=${encodeURIComponent(SITE_CONFIG.defaultMessage)}`;
   }
 });
 
@@ -299,5 +299,5 @@ window.handleDirectBuyClick = function(productId) {
 
   const selection = window.productSelections[productId];
   const url = generateProductWhatsAppUrl(productId, selection.size, selection.color);
-  window.open(url, '_blank');
+  openWhatsAppUrl(url);
 };

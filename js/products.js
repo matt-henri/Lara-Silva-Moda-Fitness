@@ -115,16 +115,37 @@ const PRODUCTS = [
 
 // Helper para formatar moeda
 function formatCurrency(val) {
-  return `${SITE_CONFIG.currencySymbol} ${val.toFixed(2).replace('.', ',')}`;
+  const num = typeof val === 'number' ? val : (parseFloat(val) || 0);
+  return `${SITE_CONFIG.currencySymbol} ${num.toFixed(2).replace('.', ',')}`;
+}
+
+// Helper universal para abrir WhatsApp (funciona em Desktop, iOS Safari, Android Chrome e WebViews)
+function openWhatsAppUrl(url) {
+  if (!url) return;
+  const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+  
+  if (isMobile) {
+    window.location.href = url;
+  } else {
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      link.remove();
+    }, 100);
+  }
 }
 
 // Helper para gerar link de WhatsApp para um produto específico
 function generateProductWhatsAppUrl(productId, selectedSize, selectedColor) {
   const product = PRODUCTS.find(p => p.id === productId);
-  if (!product) return `https://wa.me/${SITE_CONFIG.whatsappNumber}`;
+  if (!product) return `https://api.whatsapp.com/send?phone=${SITE_CONFIG.whatsappNumber}`;
   
   const sizeText = selectedSize ? `no tamanho *${selectedSize}*` : '';
   const colorText = selectedColor ? `na cor *${selectedColor}*` : '';
   const text = `Olá! Gostaria de comprar o *${product.title}* (${formatCurrency(product.price)}) ${colorText} ${sizeText}. Está disponível?`;
-  return `https://wa.me/${SITE_CONFIG.whatsappNumber}?text=${encodeURIComponent(text.trim())}`;
+  return `https://api.whatsapp.com/send?phone=${SITE_CONFIG.whatsappNumber}&text=${encodeURIComponent(text.trim())}`;
 }

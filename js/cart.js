@@ -105,22 +105,26 @@ class CartManager {
   }
 
   generateWhatsAppCheckoutUrl() {
-    if (this.items.length === 0) return `https://wa.me/${SITE_CONFIG.whatsappNumber}`;
+    if (!this.items || this.items.length === 0) {
+      return `https://api.whatsapp.com/send?phone=${SITE_CONFIG.whatsappNumber}&text=${encodeURIComponent(SITE_CONFIG.defaultMessage)}`;
+    }
 
     let msg = `✨ *Novo Pedido - ${SITE_CONFIG.brandName}*\n`;
     msg += `─────────────────────────\n`;
 
     this.items.forEach((item, i) => {
+      const price = typeof item.price === 'number' ? item.price : (parseFloat(item.price) || 0);
+      const qty = parseInt(item.quantity, 10) || 1;
       msg += `${i + 1}. *${item.title}*\n`;
-      msg += `   • Cor: ${item.color || 'Padrão'} | Tam: ${item.size} | Qtd: ${item.quantity}\n`;
-      msg += `   • Subtotal: ${formatCurrency(item.price * item.quantity)}\n`;
+      msg += `   • Cor: ${item.color || 'Padrão'} | Tam: ${item.size} | Qtd: ${qty}\n`;
+      msg += `   • Subtotal: ${formatCurrency(price * qty)}\n`;
     });
 
     msg += `─────────────────────────\n`;
     msg += `*Total do Pedido: ${formatCurrency(this.getTotal())}*\n\n`;
     msg += `Gostaria de confirmar a disponibilidade e os detalhes de pagamento/envio.`;
 
-    return `https://wa.me/${SITE_CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+    return `https://api.whatsapp.com/send?phone=${SITE_CONFIG.whatsappNumber}&text=${encodeURIComponent(msg)}`;
   }
 
   updateUI() {
@@ -226,8 +230,9 @@ class CartManager {
     if (this.whatsappCheckoutBtn) {
       this.whatsappCheckoutBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        if (this.items.length > 0) {
-          window.open(this.generateWhatsAppCheckoutUrl(), '_blank');
+        if (this.items && this.items.length > 0) {
+          const checkoutUrl = this.generateWhatsAppCheckoutUrl();
+          openWhatsAppUrl(checkoutUrl);
         }
       });
     }
