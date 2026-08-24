@@ -408,7 +408,7 @@ ul, ol {
 .hero-background {
   position: absolute;
   inset: 0;
-  background-image: url('../assets/lara_heroSectionMobile.jpg');
+  background-image: url('../assets/lara_heroSectionMobile.webp');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -416,7 +416,7 @@ ul, ol {
 
 @media (min-width: 769px) {
   .hero-background {
-    background-image: url('../assets/lara_heroSection.jpg');
+    background-image: url('../assets/lara_heroSection.webp');
   }
 }
 

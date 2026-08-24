@@ -17,12 +17,12 @@ const PRODUCTS = [
     price: 189.90,
     oldPrice: 219.90,
     badge: "Novo",
-    image: "assets/top/topBranco.png",
+    image: "assets/top/topBranco.webp",
     sizes: ["P", "M", "G"],
     colors: [
-      { name: "Branco Neve", hex: "#F3F3F3", image: "assets/top/topBranco.png" },
-      { name: "Preto Ônix", hex: "#1A1A1A", image: "assets/top/topPreto.jpg" },
-      { name: "Verde Militar", hex: "#59614C", image: "assets/top/topVerde.jpg" }
+      { name: "Branco Neve", hex: "#F3F3F3", image: "assets/top/topBranco.webp" },
+      { name: "Preto Ônix", hex: "#1A1A1A", image: "assets/top/topPreto.webp" },
+      { name: "Verde Militar", hex: "#59614C", image: "assets/top/topVerde.webp" }
     ],
     inStock: true,
     description: "Top canelado de alta sustentação e compressão balanceada. Tecido respirável com proteção UV50+."
