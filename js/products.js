@@ -4,7 +4,7 @@
 
 const SITE_CONFIG = {
   brandName: "LARA SILVA MODA FITNESS",
-  whatsappNumber: "5534988315643",
+  whatsappNumber: "5534998672696",
   currencySymbol: "R$",
   defaultMessage: "Olá! Gostaria de tirar dúvidas sobre as peças da Lara Silva Moda Fitness."
 };
