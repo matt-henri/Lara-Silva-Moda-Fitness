@@ -1,0 +1,371 @@
+/* ==========================================================================
+   Product Page Styles
+   ========================================================================== */
+
+.product-page-main {
+  margin-top: 80px;
+  padding: 24px 0 40px 0;
+  background-color: var(--color-surface);
+}
+
+.product-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 24px;
+  transition: color var(--transition-fast);
+}
+
+.product-back-link:hover {
+  color: var(--color-primary);
+}
+
+.product-back-link .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.product-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+}
+
+@media (min-width: 900px) {
+  .product-layout {
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: start;
+  }
+}
+
+/* ==========================================================================
+   Gallery (Left Column)
+   ========================================================================== */
+.product-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.product-gallery-main {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background-color: var(--color-surface-container);
+  overflow: hidden;
+}
+
+#main-product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-discount-tag {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background-color: #E8F8EE;
+  color: #1EBE5D;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  z-index: 2;
+  text-transform: uppercase;
+}
+
+.product-gallery-thumbnails {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.thumbnail-img {
+  width: 80px;
+  height: 106px;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color var(--transition-fast);
+}
+
+.thumbnail-img:hover, .thumbnail-img.active {
+  border-color: var(--color-primary);
+}
+
+/* ==========================================================================
+   Product Info (Right Column)
+   ========================================================================== */
+.product-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.product-header-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.product-title-large {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 500;
+  color: var(--color-primary);
+  line-height: 1.2;
+}
+
+
+
+.product-pricing {
+  margin-bottom: 32px;
+}
+
+.product-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.product-old-price-large {
+  font-size: 1rem;
+  color: var(--color-secondary);
+  text-decoration: line-through;
+}
+
+.product-price-pix {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.product-pix-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.product-installments {
+  font-size: 0.9rem;
+  color: var(--color-secondary);
+}
+
+.product-installments strong {
+  color: var(--color-primary);
+}
+
+/* ==========================================================================
+   Options (Color, Size)
+   ========================================================================== */
+.product-options {
+  margin-bottom: 32px;
+}
+
+.product-option-group {
+  margin-bottom: 24px;
+}
+
+.option-label {
+  font-size: 1rem;
+  color: var(--color-secondary);
+  margin-bottom: 12px;
+}
+
+.option-label strong {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.color-swatches-large {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.color-dot-large {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  outline: 2px solid transparent;
+  outline-offset: 3px;
+  transition: transform var(--transition-fast);
+}
+
+.color-dot-large:hover {
+  transform: scale(1.1);
+}
+
+.color-dot-large.active {
+  outline-color: var(--color-primary);
+  transform: scale(1.1);
+}
+
+.size-selector-large {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.size-btn-large {
+  flex: 1;
+  max-width: 80px;
+  height: 48px;
+  border: 1px solid var(--color-outline-variant);
+  background-color: #FFFFFF;
+  color: var(--color-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.size-btn-large:hover {
+  border-color: var(--color-primary);
+}
+
+.size-btn-large.active {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: #FFFFFF;
+}
+
+.size-guide-links {
+  display: flex;
+  gap: 24px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.size-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-secondary);
+  text-transform: uppercase;
+}
+
+.size-link:hover {
+  color: var(--color-primary);
+}
+
+.size-link .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* ==========================================================================
+   Add to Bag Button
+   ========================================================================== */
+.btn-add-to-bag {
+  background-color: #1EBE5D;
+  color: #FFFFFF;
+  font-size: 1rem;
+  padding: 18px 24px;
+  border: none;
+  width: 100%;
+  margin-bottom: 32px;
+}
+
+.btn-add-to-bag:hover {
+  background-color: #189e4c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(30, 190, 93, 0.3);
+}
+
+/* ==========================================================================
+   Benefits Box
+   ========================================================================== */
+.product-benefits-box {
+  background-color: var(--color-surface-container-lowest);
+  padding: 24px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 32px;
+}
+
+.product-benefits-box ul {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.product-benefits-box li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: var(--color-on-surface);
+  font-weight: 500;
+}
+
+.product-benefits-box li .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--color-secondary);
+}
+
+/* ==========================================================================
+   Accordion Description
+   ========================================================================== */
+.product-accordion {
+  border-top: 1px solid var(--color-outline-variant);
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+.accordion-item {
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+.accordion-item:last-child {
+  border-bottom: none;
+}
+
+.accordion-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--color-primary);
+  text-transform: uppercase;
+}
+
+.accordion-header .material-symbols-outlined {
+  transition: transform var(--transition-fast);
+}
+
+.accordion-item.active .accordion-header .material-symbols-outlined {
+  transform: rotate(180deg);
+}
+
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height var(--transition-normal);
+  color: var(--color-secondary);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.accordion-item.active .accordion-content {
+  max-height: 1000px; /* arbitrary large max-height */
+}
+
+.accordion-content p {
+  padding-bottom: 24px;
+}

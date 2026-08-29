@@ -13,7 +13,7 @@ const PRODUCTS = [
   {
     id: "top-ribbed-white",
     title: "Top Canelado Performance",
-    category: "tops",
+    category: "top",
     price: 189.90,
     oldPrice: 219.90,
     badge: "Novo",
@@ -30,7 +30,7 @@ const PRODUCTS = [
   {
     id: "legging-high-waist-black",
     title: "Legging Treino Cintura Alta",
-    category: "leggings",
+    category: "calcas",
     price: 249.90,
     oldPrice: 289.90,
     badge: "Mais Vendido",
@@ -47,7 +47,7 @@ const PRODUCTS = [
   {
     id: "shorts-seamless-grey",
     title: "Shorts Biker Seamless",
-    category: "shorts",
+    category: "short",
     price: 159.90,
     oldPrice: null,
     badge: "Destaque",
@@ -64,7 +64,7 @@ const PRODUCTS = [
   {
     id: "bodysuit-elevate-navy",
     title: "Macacão Fitness Elevate",
-    category: "conjuntos",
+    category: "macacao",
     price: 319.90,
     oldPrice: null,
     badge: "Esgotado",
@@ -80,7 +80,7 @@ const PRODUCTS = [
   {
     id: "top-essential-crop",
     title: "Top Tiras Strappy",
-    category: "tops",
+    category: "top",
     price: 169.90,
     oldPrice: 199.90,
     badge: "Novo",
@@ -97,7 +97,7 @@ const PRODUCTS = [
   {
     id: "legging-sculpt-taupe",
     title: "Legging Modeladora Seamless",
-    category: "leggings",
+    category: "calcas",
     price: 259.90,
     oldPrice: null,
     badge: "Exclusivo",
