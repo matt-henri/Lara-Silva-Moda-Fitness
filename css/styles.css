@@ -1293,6 +1293,14 @@ ul, ol {
   }
 }
 
+@media (max-width: 768px) {
+  .whatsapp-floating.hide-on-mobile {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+  }
+}
+
 /* ==========================================================================
    Toast Notifications
    ========================================================================== */

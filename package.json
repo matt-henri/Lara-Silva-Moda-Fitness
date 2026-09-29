@@ -1,0 +1,26 @@
+{
+  "name": "projeto-lara",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "npx vercel dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matt-henri/Lara-Silva-Moda-Fitness.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/matt-henri/Lara-Silva-Moda-Fitness/issues"
+  },
+  "homepage": "https://github.com/matt-henri/Lara-Silva-Moda-Fitness#readme",
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "dotenv": "^17.4.2"
+  }
+}

@@ -114,6 +114,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const whatsappFloating = document.getElementById('whatsapp-floating');
   if (whatsappFloating) {
     whatsappFloating.href = `https://api.whatsapp.com/send?phone=${SITE_CONFIG.whatsappNumber}&text=${encodeURIComponent(SITE_CONFIG.defaultMessage)}`;
+    
+    // Hide on mobile when hero section is visible
+    const heroSection = document.querySelector('.hero');
+    if (heroSection) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            whatsappFloating.classList.add('hide-on-mobile');
+          } else {
+            whatsappFloating.classList.remove('hide-on-mobile');
+          }
+        });
+      }, { threshold: 0.1 });
+      observer.observe(heroSection);
+    }
   }
 });
 
