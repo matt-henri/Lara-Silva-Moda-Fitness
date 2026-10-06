@@ -1,6 +1,6 @@
 /**
  * Lara Silva Moda Fitness - Painel Administrativo & Dashboard
- * Gestão de Estoque em Tempo Real + Gráficos Mensais Conectados ao Banco Neon
+ * Gestão de Estoque em Tempo Real + Preço de Custo, Venda e Margem de Lucro + Gráficos Financeiros Conectados ao Banco Neon
  */
 
 let sessionPassword = '';
@@ -8,9 +8,11 @@ let allProducts = [];
 let currentFilterCategory = 'ALL';
 let currentSearchTerm = '';
 let currentChartCategory = 'ALL';
+let currentFinancialChartCategory = 'ALL';
 
 // Instâncias do Chart.js
 let monthlyFlowChart = null;
+let financialFlowChart = null;
 let categoryDonutChart = null;
 
 // Categorias Oficiais do Sistema
@@ -25,13 +27,27 @@ const CATEGORIES = [
 
 const MONTH_LABELS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
-// Estrutura de dados limpa (iniciada em zero)
+// Estrutura de dados limpa (iniciada em zero) para unidades físicas e valores financeiros (R$)
 function createCleanMonthlyData() {
   const data = {
-    'ALL': { entradas: Array(12).fill(0), saidas: Array(12).fill(0) }
+    'ALL': { 
+      entradas: Array(12).fill(0), 
+      saidas: Array(12).fill(0),
+      vendas: Array(12).fill(0),
+      custoVendas: Array(12).fill(0),
+      custoEntradas: Array(12).fill(0),
+      lucroReal: Array(12).fill(0)
+    }
   };
   CATEGORIES.forEach(cat => {
-    data[cat] = { entradas: Array(12).fill(0), saidas: Array(12).fill(0) };
+    data[cat] = { 
+      entradas: Array(12).fill(0), 
+      saidas: Array(12).fill(0),
+      vendas: Array(12).fill(0),
+      custoVendas: Array(12).fill(0),
+      custoEntradas: Array(12).fill(0),
+      lucroReal: Array(12).fill(0)
+    };
   });
   return data;
 }
@@ -110,6 +126,7 @@ function switchTab(tabId) {
     pageDesc.textContent = 'Visão geral de desempenho e fluxo de produtos';
     
     if (monthlyFlowChart) monthlyFlowChart.resize();
+    if (financialFlowChart) financialFlowChart.resize();
     if (categoryDonutChart) categoryDonutChart.resize();
   } else if (tabId === 'estoque') {
     tabDashboard.classList.remove('active');
@@ -140,6 +157,7 @@ function toggleSidebar(open) {
 ================================================================ */
 async function initAdmin() {
   setupMonthlyChart();
+  setupFinancialChart();
   setupDonutChart();
   
   await fetchProducts();
@@ -158,6 +176,8 @@ async function fetchProducts() {
     
     allProducts = data.map(item => ({
       ...item,
+      preco: parseFloat(item.preco) || 0,
+      preco_custo: parseFloat(item.preco_custo) || 0,
       categoria: identifyCategory(item.nome_produto)
     }));
 
@@ -172,7 +192,7 @@ async function fetchProducts() {
       list.innerHTML = `
         <div class="empty-state">
           <p style="color: var(--color-rose); font-weight: 700;">Erro ao conectar com o banco de dados.</p>
-          <p style="font-size: 13px; margin-top: 6px;">Verifique se o terminal está rodando com <code>npm run serve</code>.</p>
+          <p style="font-size: 13px; margin-top: 6px;">Verifique se o servidor local está ativo.</p>
         </div>
       `;
     }
@@ -191,23 +211,43 @@ async function fetchMovimentacoes() {
       const qtd = parseInt(r.total) || 0;
       const tipo = r.tipo === 'entrada' ? 'entradas' : 'saidas';
       const cat = r.categoria;
+      const vendaTotal = parseFloat(r.valor_venda_total) || 0;
+      const custoTotal = parseFloat(r.valor_custo_total) || 0;
 
       if (mIdx >= 0 && mIdx < 12) {
-        // Incrementa no Total Geral
+        // Incrementa quantidades físicas
         monthlyData['ALL'][tipo][mIdx] += qtd;
         
+        // Incrementa valores financeiros em R$
+        if (tipo === 'saida') {
+          monthlyData['ALL'].vendas[mIdx] += vendaTotal;
+          monthlyData['ALL'].custoVendas[mIdx] += custoTotal;
+          monthlyData['ALL'].lucroReal[mIdx] += (vendaTotal - custoTotal);
+        } else {
+          monthlyData['ALL'].custoEntradas[mIdx] += custoTotal;
+        }
+
         // Incrementa na Categoria Específica
         if (monthlyData[cat]) {
           monthlyData[cat][tipo][mIdx] += qtd;
+          if (tipo === 'saida') {
+            monthlyData[cat].vendas[mIdx] += vendaTotal;
+            monthlyData[cat].custoVendas[mIdx] += custoTotal;
+            monthlyData[cat].lucroReal[mIdx] += (vendaTotal - custoTotal);
+          } else {
+            monthlyData[cat].custoEntradas[mIdx] += custoTotal;
+          }
         }
       }
     });
 
     updateMonthlyChart();
+    updateFinancialChart();
     updateKPIs();
   } catch (err) {
     console.warn('Histórico ainda vazio ou recém-criado:', err);
     updateMonthlyChart();
+    updateFinancialChart();
   }
 }
 
@@ -244,29 +284,70 @@ function identifyCategory(nome) {
 ================================================================ */
 function updateKPIs() {
   const totalStock = allProducts.reduce((acc, p) => acc + (parseInt(p.quantidade) || 0), 0);
+  
+  // Totais Financeiros do Estoque Físico Atual
   const totalValue = allProducts.reduce((acc, p) => {
     const price = parseFloat(p.preco) || 0;
     const qty = parseInt(p.quantidade) || 0;
     return acc + (price * qty);
   }, 0);
 
+  const totalCost = allProducts.reduce((acc, p) => {
+    const cost = parseFloat(p.preco_custo) || 0;
+    const qty = parseInt(p.quantidade) || 0;
+    return acc + (cost * qty);
+  }, 0);
+
+  const totalStockProfit = totalValue - totalCost;
+  const stockMarginPct = totalValue > 0 ? ((totalStockProfit / totalValue) * 100) : 0;
+
   // Mês Atual
   const curMonthIndex = new Date().getMonth();
   const currentInputs = monthlyData['ALL'].entradas[curMonthIndex] || 0;
   const currentOutputs = monthlyData['ALL'].saidas[curMonthIndex] || 0;
+  const currentMonthSales = monthlyData['ALL'].vendas[curMonthIndex] || 0;
+  const currentMonthProfit = monthlyData['ALL'].lucroReal[curMonthIndex] || 0;
+  const currentMonthMargin = currentMonthSales > 0 ? ((currentMonthProfit / currentMonthSales) * 100) : 0;
 
+  // Atualização dos elementos operacionais
   const kpiTotalStock = document.getElementById('kpiTotalStock');
   const kpiProductCount = document.getElementById('kpiProductCount');
   const kpiMonthInputs = document.getElementById('kpiMonthInputs');
   const kpiMonthOutputs = document.getElementById('kpiMonthOutputs');
-  const kpiTotalValue = document.getElementById('kpiTotalValue');
+  const kpiMonthProfit = document.getElementById('kpiMonthProfit');
+  const kpiMonthProfitTag = document.getElementById('kpiMonthProfitTag');
 
   if (kpiTotalStock) kpiTotalStock.textContent = totalStock;
   if (kpiProductCount) kpiProductCount.textContent = `${allProducts.length} itens cadastrados`;
   if (kpiMonthInputs) kpiMonthInputs.textContent = `${currentInputs}`;
   if (kpiMonthOutputs) kpiMonthOutputs.textContent = `${currentOutputs}`;
+  
+  if (kpiMonthProfit) {
+    kpiMonthProfit.textContent = currentMonthProfit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+  if (kpiMonthProfitTag) {
+    kpiMonthProfitTag.textContent = currentOutputs > 0 
+      ? `${currentOutputs} venda${currentOutputs === 1 ? '' : 's'} (${currentMonthMargin >= 0 ? '+' : ''}${currentMonthMargin.toFixed(1)}% margem)`
+      : 'Vendas do mês';
+  }
+
+  // Atualização dos elementos financeiros gerais
+  const kpiTotalCost = document.getElementById('kpiTotalCost');
+  const kpiTotalValue = document.getElementById('kpiTotalValue');
+  const kpiStockProfit = document.getElementById('kpiStockProfit');
+  const kpiStockProfitMarginTag = document.getElementById('kpiStockProfitMarginTag');
+
+  if (kpiTotalCost) {
+    kpiTotalCost.textContent = totalCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
   if (kpiTotalValue) {
     kpiTotalValue.textContent = totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+  if (kpiStockProfit) {
+    kpiStockProfit.textContent = totalStockProfit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+  if (kpiStockProfitMarginTag) {
+    kpiStockProfitMarginTag.textContent = `${stockMarginPct >= 0 ? '+' : ''}${stockMarginPct.toFixed(1)}% margem`;
   }
 
   const navBadge = document.getElementById('navStockCount');
@@ -309,6 +390,8 @@ function renderLowStockAlerts() {
 /* ================================================================
    5. GRÁFICOS INTERATIVOS (CHART.JS)
 ================================================================ */
+
+// GRÁFICO 1: FLUXO FÍSICO DE PRODUTOS (UNIDADES)
 function setupMonthlyChart() {
   const ctx = document.getElementById('monthlyFlowChart');
   if (!ctx) return;
@@ -407,6 +490,129 @@ function selectChartCategory(cat) {
   updateMonthlyChart();
 }
 
+// GRÁFICO 2: PERFORMANCE FINANCEIRA (CUSTO, VENDAS & LUCRO REAL EM R$)
+function setupFinancialChart() {
+  const ctx = document.getElementById('financialFlowChart');
+  if (!ctx) return;
+
+  const dataCategory = monthlyData[currentFinancialChartCategory] || monthlyData['ALL'];
+
+  if (financialFlowChart) {
+    financialFlowChart.destroy();
+  }
+
+  financialFlowChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: MONTH_LABELS,
+      datasets: [
+        {
+          label: 'Custo dos Produtos (Vendas)',
+          data: [...dataCategory.custoVendas],
+          backgroundColor: '#f59e0b', // Âmbar / Laranja elegante
+          borderRadius: 6,
+          borderSkipped: false,
+          barPercentage: 0.6,
+          categoryPercentage: 0.75
+        },
+        {
+          label: 'Valor de Vendas (Faturamento)',
+          data: [...dataCategory.vendas],
+          backgroundColor: '#2563eb', // Azul Royal
+          borderRadius: 6,
+          borderSkipped: false,
+          barPercentage: 0.6,
+          categoryPercentage: 0.75
+        },
+        {
+          label: 'Lucro Real Líquido',
+          data: [...dataCategory.lucroReal],
+          backgroundColor: '#10b981', // Verde Esmeralda
+          borderRadius: 6,
+          borderSkipped: false,
+          barPercentage: 0.6,
+          categoryPercentage: 0.75
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0f172a',
+          titleFont: { family: 'Plus Jakarta Sans', size: 13, weight: '700' },
+          bodyFont: { family: 'Inter', size: 12 },
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: {
+            label: function(context) {
+              const val = context.raw || 0;
+              const formatted = val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+              return ` ${context.dataset.label}: ${formatted}`;
+            },
+            afterBody: function(contexts) {
+              if (!contexts || contexts.length < 3) return '';
+              const vendas = contexts[1] ? contexts[1].raw : 0;
+              const lucro = contexts[2] ? contexts[2].raw : 0;
+              if (vendas > 0) {
+                const margem = ((lucro / vendas) * 100).toFixed(1);
+                return ` Margem de Lucro Real: ${margem}%`;
+              }
+              return '';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            font: { family: 'Plus Jakarta Sans', size: 12, weight: '600' },
+            color: '#64748b'
+          }
+        },
+        y: {
+          grid: { color: '#f1f5f9' },
+          ticks: {
+            font: { family: 'Inter', size: 11 },
+            color: '#94a3b8',
+            callback: function(value) {
+              return 'R$ ' + value.toLocaleString('pt-BR');
+            }
+          },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+function updateFinancialChart() {
+  if (!financialFlowChart) return;
+  const dataCategory = monthlyData[currentFinancialChartCategory] || monthlyData['ALL'];
+  financialFlowChart.data.datasets[0].data = [...dataCategory.custoVendas];
+  financialFlowChart.data.datasets[1].data = [...dataCategory.vendas];
+  financialFlowChart.data.datasets[2].data = [...dataCategory.lucroReal];
+  financialFlowChart.update();
+}
+
+function selectFinancialChartCategory(cat) {
+  currentFinancialChartCategory = cat;
+
+  document.querySelectorAll('#chartFinancialCategoryPills .cat-pill').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.financialCategory === cat);
+  });
+
+  updateFinancialChart();
+}
+
+// GRÁFICO 3: ROSCA POR CATEGORIA
 function setupDonutChart() {
   const ctx = document.getElementById('categoryDonutChart');
   if (!ctx) return;
@@ -477,7 +683,7 @@ function setupDonutChart() {
  * Reseta todo o histórico de testes no banco de dados e na tela
  */
 async function resetHistory() {
-  if (!confirm('Deseja realmente zerar todo o histórico de testes de entradas e saídas?\n\nO gráfico voltará a 0 e começará a registrar as vendas e reposições reais a partir de agora.')) {
+  if (!confirm('Deseja realmente zerar todo o histórico de testes de entradas e saídas?\n\nOs gráficos voltarão a 0 e começarão a registrar as vendas, custos e lucros reais a partir de agora.')) {
     return;
   }
 
@@ -494,8 +700,9 @@ async function resetHistory() {
     if (res.ok) {
       monthlyData = createCleanMonthlyData();
       updateMonthlyChart();
+      updateFinancialChart();
       updateKPIs();
-      alert('✓ Histórico de testes zerado com sucesso!\n\nAgora cada item que você remover (-) será computado como venda no gráfico, e cada item adicionado (+) como reposição.');
+      alert('✓ Histórico de testes zerado com sucesso!\n\nAgora cada item que você remover (-) será computado como venda no gráfico com faturamento e lucro calculados, e cada item adicionado (+) como reposição.');
     } else {
       const err = await res.json();
       alert('Erro ao resetar: ' + (err.erro || 'Falha na autenticação'));
@@ -506,7 +713,7 @@ async function resetHistory() {
 }
 
 /* ================================================================
-   6. GESTÃO DE ESTOQUE (LISTA, FILTROS & AJUSTE +/- EM TEMPO REAL)
+   6. GESTÃO DE ESTOQUE (LISTA, PREÇOS EDITÁVEIS, MARGEM & AJUSTE)
 ================================================================ */
 function renderInventory() {
   const list = document.getElementById('inventoryList');
@@ -541,21 +748,99 @@ function renderInventory() {
     const imgSrc = p.imagem || 'https://placehold.co/100x100/f1f5f9/64748b?text=Sem+Foto';
     const isLow = parseInt(p.quantidade) < 5;
 
+    const costVal = parseFloat(p.preco_custo || 0).toFixed(2);
+    const priceVal = parseFloat(p.preco || 0).toFixed(2);
+
+    const costNum = parseFloat(costVal) || 0;
+    const priceNum = parseFloat(priceVal) || 0;
+    const profitNum = priceNum - costNum;
+    const marginPct = priceNum > 0 ? ((profitNum / priceNum) * 100) : 0;
+
+    const marginClass = profitNum > 0 ? 'positive' : profitNum < 0 ? 'negative' : 'neutral';
+    const profitFormatted = (profitNum >= 0 ? '+R$ ' : '-R$ ') + Math.abs(profitNum).toFixed(2).replace('.', ',');
+    const marginPctFormatted = (profitNum >= 0 ? '+' : '') + marginPct.toFixed(1).replace('.', ',') + '% margem';
+
     return `
-      <div class="inventory-item">
+      <div class="inventory-item" id="item-${p.id}">
         <img src="${imgSrc}" class="item-img" alt="${p.nome_produto}" onerror="this.src='https://placehold.co/100x100/f1f5f9/64748b?text=Foto'">
         
         <div class="item-info">
-          <h3 class="item-name">${p.nome_produto}</h3>
-          <div class="item-details">
-            <span class="detail-category">${p.categoria}</span>
-            <span class="detail-badge">Cor: ${p.cor || 'Padrão'}</span>
-            <span class="detail-badge">Tam: ${p.tamanho || 'U'}</span>
-            <span class="detail-badge price-tag">R$ ${parseFloat(p.preco || 0).toFixed(2).replace('.', ',')}</span>
+          <div class="item-header-row">
+            <h3 class="item-name">${p.nome_produto}</h3>
+            <div class="item-badges">
+              <span class="detail-category">${p.categoria}</span>
+              <span class="detail-badge">Cor: ${p.cor || 'Padrão'}</span>
+              <span class="detail-badge">Tam: ${p.tamanho || 'U'}</span>
+            </div>
+          </div>
+
+          <!-- LINHA FINANCEIRA EDITÁVEL: CUSTO, VENDA E MARGEM DE LUCRO CALCULADA -->
+          <div class="pricing-control-row">
+            <div class="price-input-box" title="Valor que você pagou na peça (custo unitário)">
+              <label class="price-label">Valor de Custo</label>
+              <div class="input-currency-wrap">
+                <span class="currency-symbol">R$</span>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  min="0"
+                  class="price-input" 
+                  id="cost-input-${p.id}"
+                  value="${costVal}" 
+                  oninput="handlePriceChange(${p.id})"
+                  onkeydown="if(event.key === 'Enter') savePrices(${p.id})"
+                  onblur="savePrices(${p.id})"
+                  placeholder="0.00"
+                >
+              </div>
+            </div>
+
+            <div class="price-input-box" title="Valor que você vende ao cliente (preço de varejo)">
+              <label class="price-label">Valor de Venda</label>
+              <div class="input-currency-wrap">
+                <span class="currency-symbol">R$</span>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  min="0"
+                  class="price-input" 
+                  id="price-input-${p.id}"
+                  value="${priceVal}" 
+                  oninput="handlePriceChange(${p.id})"
+                  onkeydown="if(event.key === 'Enter') savePrices(${p.id})"
+                  onblur="savePrices(${p.id})"
+                  placeholder="0.00"
+                >
+              </div>
+            </div>
+
+            <div class="margin-box" title="Margem calculada automaticamente pelo sistema (Venda - Custo)">
+              <label class="price-label">Margem de Lucro</label>
+              <div class="margin-badge ${marginClass}" id="margin-badge-${p.id}">
+                <span class="margin-profit-val">${profitFormatted}</span>
+                <span class="margin-pct-tag">${marginPctFormatted}</span>
+              </div>
+            </div>
+
+            <div class="price-action-box">
+              <button 
+                class="btn-save-prices" 
+                id="btn-save-${p.id}" 
+                onclick="savePrices(${p.id})"
+                title="Salvar alterações de custo e venda no banco de dados"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                <span>Salvar</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <div class="item-controls">
+        <div class="item-controls" title="Ajuste rápido de estoque físico">
           <button class="btn-qty" onclick="updateStock(${p.id}, 'decrement', this)" aria-label="Registrar Venda / Saída">-</button>
           <span class="qty-display ${isLow ? 'low-stock' : ''}">${p.quantidade}</span>
           <button class="btn-qty" onclick="updateStock(${p.id}, 'increment', this)" aria-label="Registrar Reposição / Entrada">+</button>
@@ -580,9 +865,141 @@ function filterStockList() {
 }
 
 /**
- * Atualização em Tempo Real:
- * - Ação (-) -> Registra Venda (Saída) imediatamente no gráfico do mês e banco Neon
- * - Ação (+) -> Registra Reposição (Entrada) imediatamente no gráfico do mês e banco Neon
+ * Cálculo Automático da Margem de Lucro em Tempo Real enquanto o usuário digita
+ */
+function handlePriceChange(id) {
+  const costInput = document.getElementById(`cost-input-${id}`);
+  const priceInput = document.getElementById(`price-input-${id}`);
+  const badge = document.getElementById(`margin-badge-${id}`);
+  const saveBtn = document.getElementById(`btn-save-${id}`);
+  
+  if (!costInput || !priceInput || !badge) return;
+
+  const cost = parseFloat(costInput.value) || 0;
+  const price = parseFloat(priceInput.value) || 0;
+  const profit = price - cost;
+  const marginPct = price > 0 ? ((profit / price) * 100) : 0;
+
+  const marginClass = profit > 0 ? 'positive' : profit < 0 ? 'negative' : 'neutral';
+  badge.className = `margin-badge ${marginClass}`;
+
+  const profitFormatted = (profit >= 0 ? '+R$ ' : '-R$ ') + Math.abs(profit).toFixed(2).replace('.', ',');
+  const marginPctFormatted = (profit >= 0 ? '+' : '') + marginPct.toFixed(1).replace('.', ',') + '% margem';
+
+  badge.innerHTML = `
+    <span class="margin-profit-val">${profitFormatted}</span>
+    <span class="margin-pct-tag">${marginPctFormatted}</span>
+  `;
+
+  if (saveBtn) {
+    saveBtn.classList.remove('saved');
+    saveBtn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+        <polyline points="7 3 7 8 15 8"></polyline>
+      </svg>
+      <span>Salvar</span>
+    `;
+  }
+}
+
+/**
+ * Salva Preço de Custo e Preço de Venda no Banco de Dados
+ */
+async function savePrices(id) {
+  const costInput = document.getElementById(`cost-input-${id}`);
+  const priceInput = document.getElementById(`price-input-${id}`);
+  const saveBtn = document.getElementById(`btn-save-${id}`);
+
+  if (!costInput || !priceInput) return;
+
+  const cost = parseFloat(costInput.value);
+  const price = parseFloat(priceInput.value);
+
+  if (isNaN(cost) || isNaN(price) || cost < 0 || price < 0) {
+    alert('Por favor, informe valores válidos maiores ou iguais a zero.');
+    return;
+  }
+
+  const prod = allProducts.find(p => p.id === id);
+  if (!prod) return;
+
+  // Evita requisição duplicada se já estiver salvo com os mesmos valores
+  if (parseFloat(prod.preco_custo || 0) === cost && parseFloat(prod.preco || 0) === price && saveBtn && saveBtn.classList.contains('saved')) {
+    return;
+  }
+
+  if (saveBtn) {
+    saveBtn.classList.add('saving');
+    saveBtn.innerHTML = `<span>Salvando...</span>`;
+  }
+
+  try {
+    const res = await fetch('/api/updateEstoque', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        produto_id: id,
+        action: 'update_prices',
+        preco: price,
+        preco_custo: cost,
+        password: sessionPassword
+      })
+    });
+
+    if (res.ok) {
+      prod.preco = price;
+      prod.preco_custo = cost;
+
+      if (saveBtn) {
+        saveBtn.classList.remove('saving');
+        saveBtn.classList.add('saved');
+        saveBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Salvo!</span>
+        `;
+        setTimeout(() => {
+          if (saveBtn && saveBtn.classList.contains('saved')) {
+            saveBtn.innerHTML = `
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              <span>Salvar</span>
+            `;
+          }
+        }, 2200);
+      }
+
+      // Atualiza KPIs e gráficos financeiros em tempo real
+      updateKPIs();
+      updateFinancialChart();
+    } else {
+      const err = await res.json();
+      alert('Erro ao salvar valores: ' + (err.erro || 'Falha na autenticação'));
+      if (saveBtn) {
+        saveBtn.classList.remove('saving');
+        saveBtn.innerHTML = `<span>Salvar</span>`;
+      }
+    }
+  } catch (e) {
+    console.error('Erro de conexão ao salvar preços:', e);
+    alert('Erro de conexão com o banco de dados.');
+    if (saveBtn) {
+      saveBtn.classList.remove('saving');
+      saveBtn.innerHTML = `<span>Salvar</span>`;
+    }
+  }
+}
+
+/**
+ * Atualização em Tempo Real de Estoque Físico:
+ * - Ação (-) -> Registra Venda (Saída) com cálculo de receita e lucro real no gráfico do mês e banco Neon
+ * - Ação (+) -> Registra Reposição (Entrada) com cálculo de custo no gráfico do mês e banco Neon
  */
 async function updateStock(id, action, btnElement) {
   const qtyDisplay = action === 'increment' 
@@ -608,27 +1025,42 @@ async function updateStock(id, action, btnElement) {
   const prod = allProducts.find(p => p.id === id);
   const curMonth = new Date().getMonth();
 
+  const price = prod ? (parseFloat(prod.preco) || 0) : 0;
+  const cost = prod ? (parseFloat(prod.preco_custo) || 0) : 0;
+  const profit = price - cost;
+
   if (prod) {
     prod.quantidade = newQty;
     
-    // Atualiza histórico em memória imediatamente
+    // Atualiza histórico em memória imediatamente (Físico + Financeiro)
     if (action === 'decrement') {
       // Venda / Saída
       monthlyData['ALL'].saidas[curMonth] += 1;
+      monthlyData['ALL'].vendas[curMonth] += price;
+      monthlyData['ALL'].custoVendas[curMonth] += cost;
+      monthlyData['ALL'].lucroReal[curMonth] += profit;
+
       if (monthlyData[prod.categoria]) {
         monthlyData[prod.categoria].saidas[curMonth] += 1;
+        monthlyData[prod.categoria].vendas[curMonth] += price;
+        monthlyData[prod.categoria].custoVendas[curMonth] += cost;
+        monthlyData[prod.categoria].lucroReal[curMonth] += profit;
       }
     } else if (action === 'increment') {
       // Reposição / Entrada
       monthlyData['ALL'].entradas[curMonth] += 1;
+      monthlyData['ALL'].custoEntradas[curMonth] += cost;
+
       if (monthlyData[prod.categoria]) {
         monthlyData[prod.categoria].entradas[curMonth] += 1;
+        monthlyData[prod.categoria].custoEntradas[curMonth] += cost;
       }
     }
 
-    // Atualiza imediatamente o Gráfico, os KPIs e a Rosca
+    // Atualiza imediatamente ambos os gráficos, KPIs e a Rosca
     updateKPIs();
     updateMonthlyChart();
+    updateFinancialChart();
     renderLowStockAlerts();
     setupDonutChart();
   }
@@ -652,21 +1084,32 @@ async function updateStock(id, action, btnElement) {
       qtyDisplay.classList.toggle('low-stock', originalQty < 5);
       if (prod) prod.quantidade = originalQty;
       
-      // Reverte gráfico
+      // Reverte memória
       if (action === 'decrement') {
         monthlyData['ALL'].saidas[curMonth] = Math.max(0, monthlyData['ALL'].saidas[curMonth] - 1);
+        monthlyData['ALL'].vendas[curMonth] = Math.max(0, monthlyData['ALL'].vendas[curMonth] - price);
+        monthlyData['ALL'].custoVendas[curMonth] = Math.max(0, monthlyData['ALL'].custoVendas[curMonth] - cost);
+        monthlyData['ALL'].lucroReal[curMonth] = monthlyData['ALL'].vendas[curMonth] - monthlyData['ALL'].custoVendas[curMonth];
+
         if (prod && monthlyData[prod.categoria]) {
           monthlyData[prod.categoria].saidas[curMonth] = Math.max(0, monthlyData[prod.categoria].saidas[curMonth] - 1);
+          monthlyData[prod.categoria].vendas[curMonth] = Math.max(0, monthlyData[prod.categoria].vendas[curMonth] - price);
+          monthlyData[prod.categoria].custoVendas[curMonth] = Math.max(0, monthlyData[prod.categoria].custoVendas[curMonth] - cost);
+          monthlyData[prod.categoria].lucroReal[curMonth] = monthlyData[prod.categoria].vendas[curMonth] - monthlyData[prod.categoria].custoVendas[curMonth];
         }
       } else if (action === 'increment') {
         monthlyData['ALL'].entradas[curMonth] = Math.max(0, monthlyData['ALL'].entradas[curMonth] - 1);
+        monthlyData['ALL'].custoEntradas[curMonth] = Math.max(0, monthlyData['ALL'].custoEntradas[curMonth] - cost);
+
         if (prod && monthlyData[prod.categoria]) {
           monthlyData[prod.categoria].entradas[curMonth] = Math.max(0, monthlyData[prod.categoria].entradas[curMonth] - 1);
+          monthlyData[prod.categoria].custoEntradas[curMonth] = Math.max(0, monthlyData[prod.categoria].custoEntradas[curMonth] - cost);
         }
       }
 
       updateKPIs();
       updateMonthlyChart();
+      updateFinancialChart();
 
       const erro = await res.json();
       alert('Erro: ' + (erro.erro || 'Não foi possível alterar o estoque.'));
@@ -683,18 +1126,29 @@ async function updateStock(id, action, btnElement) {
     
     if (action === 'decrement') {
       monthlyData['ALL'].saidas[curMonth] = Math.max(0, monthlyData['ALL'].saidas[curMonth] - 1);
+      monthlyData['ALL'].vendas[curMonth] = Math.max(0, monthlyData['ALL'].vendas[curMonth] - price);
+      monthlyData['ALL'].custoVendas[curMonth] = Math.max(0, monthlyData['ALL'].custoVendas[curMonth] - cost);
+      monthlyData['ALL'].lucroReal[curMonth] = monthlyData['ALL'].vendas[curMonth] - monthlyData['ALL'].custoVendas[curMonth];
+
       if (prod && monthlyData[prod.categoria]) {
         monthlyData[prod.categoria].saidas[curMonth] = Math.max(0, monthlyData[prod.categoria].saidas[curMonth] - 1);
+        monthlyData[prod.categoria].vendas[curMonth] = Math.max(0, monthlyData[prod.categoria].vendas[curMonth] - price);
+        monthlyData[prod.categoria].custoVendas[curMonth] = Math.max(0, monthlyData[prod.categoria].custoVendas[curMonth] - cost);
+        monthlyData[prod.categoria].lucroReal[curMonth] = monthlyData[prod.categoria].vendas[curMonth] - monthlyData[prod.categoria].custoVendas[curMonth];
       }
     } else if (action === 'increment') {
       monthlyData['ALL'].entradas[curMonth] = Math.max(0, monthlyData['ALL'].entradas[curMonth] - 1);
+      monthlyData['ALL'].custoEntradas[curMonth] = Math.max(0, monthlyData['ALL'].custoEntradas[curMonth] - cost);
+
       if (prod && monthlyData[prod.categoria]) {
         monthlyData[prod.categoria].entradas[curMonth] = Math.max(0, monthlyData[prod.categoria].entradas[curMonth] - 1);
+        monthlyData[prod.categoria].custoEntradas[curMonth] = Math.max(0, monthlyData[prod.categoria].custoEntradas[curMonth] - cost);
       }
     }
 
     updateKPIs();
     updateMonthlyChart();
+    updateFinancialChart();
     alert('Erro de conexão com o banco de dados.');
   }
 }

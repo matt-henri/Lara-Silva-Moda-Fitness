@@ -176,26 +176,66 @@
             </div>
           </div>
 
-          <div class="kpi-card">
+          <div class="kpi-card kpi-card-highlight">
             <div class="kpi-header">
-              <span class="kpi-label">Valor Estimado</span>
-              <div class="kpi-icon icon-purple">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              <span class="kpi-label">Lucro Real no Mês</span>
+              <div class="kpi-icon icon-emerald">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
               </div>
             </div>
-            <div class="kpi-value" id="kpiTotalValue">R$ 0,00</div>
+            <div class="kpi-value text-emerald" id="kpiMonthProfit">R$ 0,00</div>
             <div class="kpi-footer">
-              <span class="kpi-tag tag-neutral">Preço de varejo</span>
+              <span class="kpi-tag tag-positive" id="kpiMonthProfitTag">Vendas do mês</span>
             </div>
           </div>
         </div>
 
-        <!-- Seção Principal de Gráficos -->
+        <!-- Seção de KPIs Financeiros Gerais: Custo, Faturamento e Lucro Real em Estoque -->
+        <div class="financial-summary-grid">
+          <div class="finance-card">
+            <div class="finance-header">
+              <div class="finance-title-wrap">
+                <div class="finance-icon-dot icon-amber"></div>
+                <span class="finance-label">Custo dos Produtos (Estoque)</span>
+              </div>
+              <span class="finance-badge badge-amber">Investido</span>
+            </div>
+            <div class="finance-value text-amber" id="kpiTotalCost">R$ 0,00</div>
+            <p class="finance-desc">Custo total de compra/confecção das peças em estoque</p>
+          </div>
+
+          <div class="finance-card">
+            <div class="finance-header">
+              <div class="finance-title-wrap">
+                <div class="finance-icon-dot icon-blue"></div>
+                <span class="finance-label">Valor de Venda (Estoque)</span>
+              </div>
+              <span class="finance-badge badge-blue">Faturamento Potencial</span>
+            </div>
+            <div class="finance-value text-blue" id="kpiTotalValue">R$ 0,00</div>
+            <p class="finance-desc">Total de receita bruta estimada no preço de varejo</p>
+          </div>
+
+          <div class="finance-card hero-profit-card">
+            <div class="finance-header">
+              <div class="finance-title-wrap">
+                <div class="finance-icon-dot icon-emerald"></div>
+                <span class="finance-label">Lucro Real em Estoque</span>
+              </div>
+              <span class="finance-badge badge-emerald" id="kpiStockProfitMarginTag">+0.0% margem</span>
+            </div>
+            <div class="finance-value text-emerald" id="kpiStockProfit">R$ 0,00</div>
+            <p class="finance-desc">Lucro líquido estimado (já deduzindo o custo de todas as peças)</p>
+          </div>
+        </div>
+
+        <!-- Seção Principal de Gráficos: Fluxo Físico de Peças -->
         <div class="chart-section-card">
           <div class="chart-header-row">
             <div>
+              <span class="section-micro-badge">Fluxo Físico</span>
               <h2 class="chart-title">Fluxo Mensal: Entrada e Saída de Produtos</h2>
-              <p class="chart-subtitle">Selecione uma categoria para visualizar o histórico de movimentação mensal</p>
+              <p class="chart-subtitle">Selecione uma categoria para visualizar o histórico de movimentação física mensal</p>
             </div>
             <div class="chart-header-actions">
               <div class="chart-legend-custom">
@@ -212,7 +252,7 @@
             </div>
           </div>
 
-          <!-- Filtros de Categorias para o Gráfico -->
+          <!-- Filtros de Categorias para o Gráfico de Fluxo -->
           <div class="category-pills-bar" id="chartCategoryPills">
             <button class="cat-pill active" data-category="ALL" onclick="selectChartCategory('ALL')">
               <span>Total de Produtos</span>
@@ -237,9 +277,57 @@
             </button>
           </div>
 
-          <!-- Container do Canvas do Gráfico Mensal -->
+          <!-- Container do Canvas do Gráfico Mensal de Fluxo -->
           <div class="chart-canvas-container">
             <canvas id="monthlyFlowChart"></canvas>
+          </div>
+        </div>
+
+        <!-- NOVO GRÁFICO: Performance Financeira & Lucro Real Mensal -->
+        <div class="chart-section-card financial-chart-section">
+          <div class="chart-header-row">
+            <div>
+              <span class="section-micro-badge finance-badge-highlight">Performance Financeira & Lucro</span>
+              <h2 class="chart-title">Balanço Financeiro: Custos, Vendas & Lucro Real</h2>
+              <p class="chart-subtitle">Histórico mensal em reais (R$) para acompanhar o custo das peças, faturamento e o lucro real no bolso</p>
+            </div>
+            <div class="chart-header-actions">
+              <div class="chart-legend-custom">
+                <span class="legend-badge legend-cost"><span class="legend-dot cost"></span> Custo dos Produtos</span>
+                <span class="legend-badge legend-sales"><span class="legend-dot sales"></span> Valor de Vendas</span>
+                <span class="legend-badge legend-profit"><span class="legend-dot profit"></span> Lucro Real Líquido</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filtros de Categorias para o Gráfico Financeiro -->
+          <div class="category-pills-bar" id="chartFinancialCategoryPills">
+            <button class="cat-pill active" data-financial-category="ALL" onclick="selectFinancialChartCategory('ALL')">
+              <span>Total Financeiro</span>
+            </button>
+            <button class="cat-pill" data-financial-category="TOP" onclick="selectFinancialChartCategory('TOP')">
+              <span>TOP</span>
+            </button>
+            <button class="cat-pill" data-financial-category="SHORT" onclick="selectFinancialChartCategory('SHORT')">
+              <span>SHORT</span>
+            </button>
+            <button class="cat-pill" data-financial-category="CALÇAS" onclick="selectFinancialChartCategory('CALÇAS')">
+              <span>CALÇAS</span>
+            </button>
+            <button class="cat-pill" data-financial-category="CONJUNTOS SHORT" onclick="selectFinancialChartCategory('CONJUNTOS SHORT')">
+              <span>CONJUNTOS SHORT</span>
+            </button>
+            <button class="cat-pill" data-financial-category="CONJUNTOS CALÇA" onclick="selectFinancialChartCategory('CONJUNTOS CALÇA')">
+              <span>CONJUNTOS CALÇA</span>
+            </button>
+            <button class="cat-pill" data-financial-category="MACACÃO E MACAQUINHO" onclick="selectFinancialChartCategory('MACACÃO E MACAQUINHO')">
+              <span>MACACÃO E MACAQUINHO</span>
+            </button>
+          </div>
+
+          <!-- Container do Canvas do Gráfico Financeiro -->
+          <div class="chart-canvas-container">
+            <canvas id="financialFlowChart"></canvas>
           </div>
         </div>
 

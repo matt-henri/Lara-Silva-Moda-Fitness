@@ -5,6 +5,9 @@ module.exports = async (req, res) => {
     // Conecta ao banco de dados usando a chave secreta do .env
     const sql = neon(process.env.DATABASE_URL);
     
+    // Garante coluna preco_custo
+    await sql`ALTER TABLE estoque_fitness ADD COLUMN IF NOT EXISTS preco_custo NUMERIC(10,2) DEFAULT 0.00`;
+
     // Busca todos os produtos da nossa tabela
     const produtos = await sql`SELECT * FROM estoque_fitness ORDER BY id ASC`;
     

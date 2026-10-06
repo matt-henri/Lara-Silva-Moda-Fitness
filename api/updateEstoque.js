@@ -24,9 +24,16 @@ module.exports = async (req, res) => {
         tipo VARCHAR(20) NOT NULL,
         quantidade INT DEFAULT 1,
         categoria VARCHAR(50),
+        preco_venda NUMERIC(10,2) DEFAULT 0.00,
+        preco_custo NUMERIC(10,2) DEFAULT 0.00,
         data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
+
+    // Garante colunas de custo e venda
+    await sql`ALTER TABLE estoque_fitness ADD COLUMN IF NOT EXISTS preco_custo NUMERIC(10,2) DEFAULT 0.00`;
+    await sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS preco_venda NUMERIC(10,2) DEFAULT 0.00`;
+    await sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS preco_custo NUMERIC(10,2) DEFAULT 0.00`;
 
     // Ação para resetar todo o histórico de testes
     if (action === 'reset_history') {
@@ -38,11 +45,37 @@ module.exports = async (req, res) => {
       return res.status(400).json({ erro: 'ID do produto é obrigatório' });
     }
 
-    // Busca dados atuais do produto para registrar a categoria
-    const prodRows = await sql`SELECT nome_produto, quantidade FROM estoque_fitness WHERE id = ${produto_id}`;
+    // AÇÃO: Atualizar Preço de Venda e Preço de Custo
+    if (action === 'update_prices') {
+      const precoVenda = parseFloat(req.body.preco);
+      const precoCusto = parseFloat(req.body.preco_custo);
+
+      if (isNaN(precoVenda) || isNaN(precoCusto)) {
+        return res.status(400).json({ erro: 'Valores inválidos para preço de venda ou custo.' });
+      }
+
+      await sql`
+        UPDATE estoque_fitness 
+        SET preco = ${precoVenda}, preco_custo = ${precoCusto} 
+        WHERE id = ${produto_id}
+      `;
+
+      return res.status(200).json({
+        sucesso: true,
+        produto_id,
+        preco: precoVenda,
+        preco_custo: precoCusto
+      });
+    }
+
+    // Busca dados atuais do produto para registrar a categoria e valores
+    const prodRows = await sql`SELECT nome_produto, quantidade, preco, preco_custo FROM estoque_fitness WHERE id = ${produto_id}`;
     if (prodRows.length === 0) {
       return res.status(404).json({ erro: 'Produto não encontrado' });
     }
+
+    const precoVendaItem = parseFloat(prodRows[0].preco) || 0;
+    const precoCustoItem = parseFloat(prodRows[0].preco_custo) || 0;
 
     let categoria = customCategoria || 'TOP';
     const nome = prodRows[0].nome_produto ? prodRows[0].nome_produto.toLowerCase() : '';
@@ -63,7 +96,10 @@ module.exports = async (req, res) => {
     // INCREMENTO (+) -> Registra como Entrada / Reposição
     if (action === 'increment') {
       await sql`UPDATE estoque_fitness SET quantidade = quantidade + 1 WHERE id = ${produto_id}`;
-      await sql`INSERT INTO movimentacoes_estoque (produto_id, tipo, quantidade, categoria) VALUES (${produto_id}, 'entrada', 1, ${categoria})`;
+      await sql`
+        INSERT INTO movimentacoes_estoque (produto_id, tipo, quantidade, categoria, preco_venda, preco_custo) 
+        VALUES (${produto_id}, 'entrada', 1, ${categoria}, ${precoVendaItem}, ${precoCustoItem})
+      `;
       return res.status(200).json({ sucesso: true, tipo: 'entrada', categoria });
     } 
     // DECREMENTO (-) -> Registra como Saída / Venda
@@ -73,7 +109,10 @@ module.exports = async (req, res) => {
         return res.status(400).json({ erro: 'O estoque deste produto já está zerado.' });
       }
       await sql`UPDATE estoque_fitness SET quantidade = GREATEST(quantidade - 1, 0) WHERE id = ${produto_id}`;
-      await sql`INSERT INTO movimentacoes_estoque (produto_id, tipo, quantidade, categoria) VALUES (${produto_id}, 'saida', 1, ${categoria})`;
+      await sql`
+        INSERT INTO movimentacoes_estoque (produto_id, tipo, quantidade, categoria, preco_venda, preco_custo) 
+        VALUES (${produto_id}, 'saida', 1, ${categoria}, ${precoVendaItem}, ${precoCustoItem})
+      `;
       return res.status(200).json({ sucesso: true, tipo: 'saida', categoria });
     } else {
       return res.status(400).json({ erro: 'Ação inválida' });
