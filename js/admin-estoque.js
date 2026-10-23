@@ -840,10 +840,64 @@ function renderInventory() {
           </div>
         </div>
 
-        <div class="item-controls" title="Ajuste rápido de estoque físico">
-          <button class="btn-qty" onclick="updateStock(${p.id}, 'decrement', this)" aria-label="Registrar Venda / Saída">-</button>
-          <span class="qty-display ${isLow ? 'low-stock' : ''}">${p.quantidade}</span>
-          <button class="btn-qty" onclick="updateStock(${p.id}, 'increment', this)" aria-label="Registrar Reposição / Entrada">+</button>
+        <!-- PAINEL VISUAL DE ESTOQUE E AÇÕES DIRECIONADAS (VENDA / ENTRADA) -->
+        <div class="stock-control-card" id="stock-card-${p.id}">
+          <div class="stock-card-top">
+            <span class="stock-tag-label">Estoque Físico</span>
+            <span class="stock-status-pill ${p.quantidade <= 0 ? 'out-of-stock' : isLow ? 'low-stock' : 'in-stock'}" id="stock-pill-${p.id}">
+              ${p.quantidade <= 0 ? '✕ Zerado' : isLow ? '⚠️ Atenção: Baixo' : '✓ Disponível'}
+            </span>
+          </div>
+
+          <div class="stock-qty-row">
+            <span class="stock-qty-number ${p.quantidade <= 0 ? 'out-of-stock' : isLow ? 'low' : ''}" id="stock-qty-${p.id}">${p.quantidade}</span>
+            <span class="stock-qty-unit">unidades</span>
+          </div>
+
+          <div class="stock-action-buttons">
+            <!-- Botão Registrar Venda (Saída / Baixa) -->
+            <button 
+              type="button"
+              class="btn-stock-action btn-sale" 
+              id="btn-sale-${p.id}"
+              onclick="updateStock(${p.id}, 'decrement', this)" 
+              title="Registrar 1 Venda (dá baixa de 1 unidade no estoque físico e contabiliza a receita)"
+              ${p.quantidade <= 0 ? 'disabled' : ''}
+            >
+              <div class="action-btn-icon icon-sale">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+              </div>
+              <div class="action-btn-text">
+                <span class="action-btn-title">Registrar Venda</span>
+                <span class="action-btn-subtitle">Baixa (-1 un)</span>
+              </div>
+            </button>
+
+            <!-- Botão Adicionar Estoque (Entrada / Reposição) -->
+            <button 
+              type="button"
+              class="btn-stock-action btn-restock" 
+              id="btn-restock-${p.id}"
+              onclick="updateStock(${p.id}, 'increment', this)" 
+              title="Adicionar 1 nova peça física ao estoque (reposição de mercadoria)"
+            >
+              <div class="action-btn-icon icon-restock">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                  <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+              </div>
+              <div class="action-btn-text">
+                <span class="action-btn-title">Repor Estoque</span>
+                <span class="action-btn-subtitle">Entrada (+1 un)</span>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -997,20 +1051,78 @@ async function savePrices(id) {
 }
 
 /**
+ * Toast de Feedback Rápido e Moderno para o Painel Administrativo
+ */
+function showAdminToast(message, type = 'info') {
+  let container = document.getElementById('adminToastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'adminToastContainer';
+    container.className = 'admin-toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `admin-toast toast-${type}`;
+  
+  let iconSvg = '';
+  if (type === 'sale') {
+    iconSvg = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+      </svg>
+    `;
+  } else if (type === 'restock') {
+    iconSvg = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+      </svg>
+    `;
+  } else {
+    iconSvg = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+    `;
+  }
+
+  toast.innerHTML = `
+    <div class="admin-toast-icon">${iconSvg}</div>
+    <span>${message}</span>
+  `;
+
+  container.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+  });
+
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 280);
+  }, 2800);
+}
+
+/**
  * Atualização em Tempo Real de Estoque Físico:
- * - Ação (-) -> Registra Venda (Saída) com cálculo de receita e lucro real no gráfico do mês e banco Neon
- * - Ação (+) -> Registra Reposição (Entrada) com cálculo de custo no gráfico do mês e banco Neon
+ * - Ação (-) -> Registra Venda (Saída): baixa 1 unidade, contabiliza faturamento e lucro real no mês
+ * - Ação (+) -> Registra Reposição (Entrada): adiciona 1 unidade, recalcula valor e custo investido
  */
 async function updateStock(id, action, btnElement) {
-  const qtyDisplay = action === 'increment' 
-    ? btnElement.previousElementSibling 
-    : btnElement.nextElementSibling;
+  const qtyDisplay = document.getElementById(`stock-qty-${id}`);
+  const pillDisplay = document.getElementById(`stock-pill-${id}`);
+  const btnSale = document.getElementById(`btn-sale-${id}`);
   
-  const originalQty = parseInt(qtyDisplay.innerText) || 0;
+  const originalQty = qtyDisplay ? (parseInt(qtyDisplay.innerText) || 0) : 0;
   
   // Impede diminuir abaixo de zero
   if (action === 'decrement' && originalQty <= 0) {
-    alert('O estoque deste produto já está zerado.');
+    showAdminToast('O estoque deste produto já está zerado.', 'warning');
     return;
   }
 
@@ -1019,8 +1131,30 @@ async function updateStock(id, action, btnElement) {
   if (action === 'increment') newQty++;
   if (action === 'decrement') newQty--;
   
-  qtyDisplay.innerText = newQty;
-  qtyDisplay.classList.toggle('low-stock', newQty < 5);
+  if (qtyDisplay) {
+    qtyDisplay.innerText = newQty;
+    qtyDisplay.className = `stock-qty-number ${newQty <= 0 ? 'out-of-stock' : newQty < 5 ? 'low' : ''} stock-pop`;
+    setTimeout(() => {
+      if (qtyDisplay) qtyDisplay.classList.remove('stock-pop');
+    }, 350);
+  }
+
+  if (pillDisplay) {
+    if (newQty <= 0) {
+      pillDisplay.className = 'stock-status-pill out-of-stock';
+      pillDisplay.innerText = '✕ Zerado';
+    } else if (newQty < 5) {
+      pillDisplay.className = 'stock-status-pill low-stock';
+      pillDisplay.innerText = '⚠️ Atenção: Baixo';
+    } else {
+      pillDisplay.className = 'stock-status-pill in-stock';
+      pillDisplay.innerText = '✓ Disponível';
+    }
+  }
+
+  if (btnSale) {
+    btnSale.disabled = (newQty <= 0);
+  }
 
   const prod = allProducts.find(p => p.id === id);
   const curMonth = new Date().getMonth();
@@ -1028,6 +1162,13 @@ async function updateStock(id, action, btnElement) {
   const price = prod ? (parseFloat(prod.preco) || 0) : 0;
   const cost = prod ? (parseFloat(prod.preco_custo) || 0) : 0;
   const profit = price - cost;
+
+  // Feedback Visual Imediato via Toast
+  if (action === 'decrement') {
+    showAdminToast(`Venda declarada: -1 peça no estoque`, 'sale');
+  } else if (action === 'increment') {
+    showAdminToast(`Reposição de estoque: +1 peça adicionada`, 'restock');
+  }
 
   if (prod) {
     prod.quantidade = newQty;
@@ -1080,8 +1221,25 @@ async function updateStock(id, action, btnElement) {
 
     if (!res.ok) {
       // Reverte se o servidor recusar
-      qtyDisplay.innerText = originalQty;
-      qtyDisplay.classList.toggle('low-stock', originalQty < 5);
+      if (qtyDisplay) {
+        qtyDisplay.innerText = originalQty;
+        qtyDisplay.className = `stock-qty-number ${originalQty <= 0 ? 'out-of-stock' : originalQty < 5 ? 'low' : ''}`;
+      }
+      if (pillDisplay) {
+        if (originalQty <= 0) {
+          pillDisplay.className = 'stock-status-pill out-of-stock';
+          pillDisplay.innerText = '✕ Zerado';
+        } else if (originalQty < 5) {
+          pillDisplay.className = 'stock-status-pill low-stock';
+          pillDisplay.innerText = '⚠️ Atenção: Baixo';
+        } else {
+          pillDisplay.className = 'stock-status-pill in-stock';
+          pillDisplay.innerText = '✓ Disponível';
+        }
+      }
+      if (btnSale) {
+        btnSale.disabled = (originalQty <= 0);
+      }
       if (prod) prod.quantidade = originalQty;
       
       // Reverte memória
@@ -1112,16 +1270,33 @@ async function updateStock(id, action, btnElement) {
       updateFinancialChart();
 
       const erro = await res.json();
-      alert('Erro: ' + (erro.erro || 'Não foi possível alterar o estoque.'));
+      showAdminToast('Erro: ' + (erro.erro || 'Falha ao sincronizar estoque.'), 'warning');
       
       if (res.status === 401) {
-        logout();
+        setTimeout(() => logout(), 1500);
       }
     }
   } catch(e) {
     // Reverte em caso de falha de conexão
-    qtyDisplay.innerText = originalQty;
-    qtyDisplay.classList.toggle('low-stock', originalQty < 5);
+    if (qtyDisplay) {
+      qtyDisplay.innerText = originalQty;
+      qtyDisplay.className = `stock-qty-number ${originalQty <= 0 ? 'out-of-stock' : originalQty < 5 ? 'low' : ''}`;
+    }
+    if (pillDisplay) {
+      if (originalQty <= 0) {
+        pillDisplay.className = 'stock-status-pill out-of-stock';
+        pillDisplay.innerText = '✕ Zerado';
+      } else if (originalQty < 5) {
+        pillDisplay.className = 'stock-status-pill low-stock';
+        pillDisplay.innerText = '⚠️ Atenção: Baixo';
+      } else {
+        pillDisplay.className = 'stock-status-pill in-stock';
+        pillDisplay.innerText = '✓ Disponível';
+      }
+    }
+    if (btnSale) {
+      btnSale.disabled = (originalQty <= 0);
+    }
     if (prod) prod.quantidade = originalQty;
     
     if (action === 'decrement') {
@@ -1149,6 +1324,6 @@ async function updateStock(id, action, btnElement) {
     updateKPIs();
     updateMonthlyChart();
     updateFinancialChart();
-    alert('Erro de conexão com o banco de dados.');
+    showAdminToast('Erro de conexão com o banco de dados.', 'warning');
   }
 }

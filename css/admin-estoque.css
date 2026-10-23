@@ -322,52 +322,110 @@ h1, h2, h3, h4 {
   border-radius: var(--radius-full);
 }
 
-/* SIDEBAR FOOTER (BOTAO SAIR) */
+/* SIDEBAR FOOTER (BOTAO SAIR MODERNO E DESTACADO) */
 .sidebar-footer {
   padding: 16px;
-  border-top: 1px solid var(--border-sidebar);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.45);
 }
 
-.logout-link {
+.btn-sidebar-logout {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 14px;
-  width: 100%;
-  padding: 14px 16px;
-  background: rgba(244, 63, 94, 0.08);
-  border: 1px solid rgba(244, 63, 94, 0.2);
-  border-radius: var(--radius-md);
-  color: #fda4af;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #f8fafc;
   cursor: pointer;
-  transition: var(--transition);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
 }
 
-.logout-link .nav-icon {
-  color: var(--color-rose);
+.logout-btn-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.logout-link:hover {
-  background: rgba(244, 63, 94, 0.16);
-  border-color: rgba(244, 63, 94, 0.4);
-  color: #ffffff;
-  transform: translateY(-1px);
+.logout-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.16);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
-.logout-text {
+.logout-btn-texts {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
-.logout-title {
+.logout-btn-title {
   font-family: var(--font-heading);
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 700;
+  color: #f8fafc;
+  line-height: 1.2;
+  letter-spacing: 0.2px;
 }
 
-.logout-sub {
-  font-size: 11px;
-  color: #fb7185;
+.logout-btn-sub {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #94a3b8;
+  line-height: 1.2;
+}
+
+.logout-btn-arrow {
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding-left: 4px;
+}
+
+.btn-sidebar-logout:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, #1e293b 100%);
+  border-color: rgba(239, 68, 68, 0.45);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.btn-sidebar-logout:hover .logout-icon-box {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #ffffff;
+  transform: scale(1.06);
+}
+
+.btn-sidebar-logout:hover .logout-btn-title {
+  color: #ffffff;
+}
+
+.btn-sidebar-logout:hover .logout-btn-sub {
+  color: #fca5a5;
+}
+
+.btn-sidebar-logout:hover .logout-btn-arrow {
+  color: #f87171;
+  transform: translateX(3px);
+}
+
+.btn-sidebar-logout:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 /* SIDEBAR BACKDROP PARA MOBILE */
@@ -1296,53 +1354,305 @@ h1, h2, h3, h4 {
   font-weight: 700;
 }
 
-/* CONTROLE DE QUANTIDADE */
-.item-controls {
+/* ================================================================
+   NOVO PAINEL DE CONTROLE DE ESTOQUE & AÇÕES DIRECIONADAS
+   (VENDA / ENTRADA COM CLAREZA MÁXIMA DE UI/UX)
+================================================================ */
+.stock-control-card {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #f8fafc;
-  padding: 6px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-light);
+  flex-direction: column;
+  gap: 8px;
+  min-width: 270px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+  transition: var(--transition);
 }
 
-.btn-qty {
-  width: 36px;
-  height: 36px;
-  background: #ffffff;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-size: 18px;
+.stock-control-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.stock-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.stock-tag-label {
+  font-size: 11px;
   font-weight: 700;
-  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.stock-status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2.5px 8px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.stock-status-pill.in-stock {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.stock-status-pill.low-stock {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.stock-status-pill.out-of-stock {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.stock-qty-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 1px 0;
+}
+
+.stock-qty-number {
+  font-family: var(--font-heading);
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+  display: inline-block;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.stock-qty-number.low {
+  color: #d97706;
+}
+
+.stock-qty-number.out-of-stock {
+  color: #ef4444;
+}
+
+.stock-qty-unit {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+/* GRUPO DE BOTÕES DE AÇÃO: VENDA E REPOSIÇÃO */
+.stock-action-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn-stock-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.btn-stock-action:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.action-btn-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: var(--transition);
-  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
-.btn-qty:hover {
-  background: #f1f5f9;
-  border-color: var(--text-muted);
+.action-btn-text {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.btn-qty:active {
-  transform: scale(0.92);
-}
-
-.qty-display {
+.action-btn-title {
   font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 18px;
-  min-width: 34px;
-  text-align: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
-.qty-display.low-stock {
-  color: var(--color-rose);
+.action-btn-subtitle {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* BOTÃO REGISTRAR VENDA (SAÍDA / BAIXA) */
+.btn-sale .action-btn-icon {
+  background: rgba(244, 63, 94, 0.12);
+  color: #e11d48;
+}
+
+.btn-sale:hover:not(:disabled) {
+  background: #fff1f2;
+  border-color: #fda4af;
+  box-shadow: 0 4px 10px rgba(244, 63, 94, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-sale:hover:not(:disabled) .action-btn-icon {
+  background: #e11d48;
+  color: #ffffff;
+}
+
+.btn-sale:hover:not(:disabled) .action-btn-title {
+  color: #be123c;
+}
+
+.btn-sale:hover:not(:disabled) .action-btn-subtitle {
+  color: #e11d48;
+}
+
+.btn-sale:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  filter: grayscale(0.8);
+}
+
+/* BOTÃO ADICIONAR ESTOQUE (ENTRADA / REPOSIÇÃO) */
+.btn-restock .action-btn-icon {
+  background: rgba(16, 185, 129, 0.14);
+  color: #059669;
+}
+
+.btn-restock:hover {
+  background: #f0fdf4;
+  border-color: #86efac;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-restock:hover .action-btn-icon {
+  background: #059669;
+  color: #ffffff;
+}
+
+.btn-restock:hover .action-btn-title {
+  color: #047857;
+}
+
+.btn-restock:hover .action-btn-subtitle {
+  color: #059669;
+}
+
+/* ANIMAÇÃO DE PULSO AO ATUALIZAR NÚMERO */
+@keyframes stockPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.22); color: var(--color-primary); }
+  100% { transform: scale(1); }
+}
+
+.stock-pop {
+  animation: stockPulse 0.3s ease-in-out;
+}
+
+/* TOAST DE NOTIFICAÇÃO ADMIN */
+.admin-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.admin-toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  background: #0f172a;
+  color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  font-size: 13.5px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transform: translateY(14px);
+  opacity: 0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: auto;
+  max-width: 380px;
+}
+
+.admin-toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.admin-toast.toast-sale {
+  border-left: 4px solid #f43f5e;
+}
+
+.admin-toast.toast-restock {
+  border-left: 4px solid #10b981;
+}
+
+.admin-toast.toast-warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.admin-toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.toast-sale .admin-toast-icon {
+  background: rgba(244, 63, 94, 0.2);
+  color: #fb7185;
+}
+
+.toast-restock .admin-toast-icon {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.toast-warning .admin-toast-icon {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
 }
 
 /* LOADING & SPINNER */
@@ -1435,8 +1745,8 @@ h1, h2, h3, h4 {
     padding: 16px;
   }
 
-  .item-controls {
+  .stock-control-card {
     width: 100%;
-    justify-content: space-between;
+    min-width: 0;
   }
 }
